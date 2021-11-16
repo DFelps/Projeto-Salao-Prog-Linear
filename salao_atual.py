@@ -169,7 +169,6 @@ def bin_to_dec(p):
 
     if p[0]==1:
         x = -x
-
     return x
 # FIM DA ROTINA
 
@@ -213,11 +212,9 @@ def pop_inicial(tp, n):
 #FIM DA ROTINA
 
 # ROTINA ALGORITMO GENÉTICO
-def ag(n,tp,ng,tc,tm,ig):
+def ag(n,prod,tp):
     pop   = np.zeros((tp,n),int)
-    fit   = np.zeros(tp,float)
-    desc  = []
-    fit_d = []
+    fit   = np.zeros(tp,int)
 
     # população inicial
     pop = pop_inicial(tp,n)
@@ -226,11 +223,22 @@ def ag(n,tp,ng,tc,tm,ig):
         print("Indivíduo ",i+1,":\t",pop[i])
 
     #seleciona melhor indivíduo como resposta
-    x = bin_to_dec(pop[0])
-
-    return x
+    fit = aptidao(n, prod, pop)
+    return 0
 # FIM DA ROTINA----------------------------------------------------
 
+# CALCULA A APTIDÃO
+def aptidao(pop,tp, prod):
+    f = np.zeros(tp,int)
+    soma = 0
+    for i in range(tp):
+        f[i] = avalia(pop[i], prod)   # minimização
+
+        soma += f[i]
+    for i in range(tp):
+        f[i] = f[i]/soma
+    return f
+# FIM DA ROTINA
 
 # CONFIG AG
 TP = 10      # tamanho da população
@@ -238,6 +246,7 @@ TC = 0.8     # taxa de cruzamento
 TM = 0.1     # taxa de mutação
 IG = 0.1     # intervalo de geração
 NG = 100     # número de gerações
+POP = []
 
 # CÓDIGO PRINCIPAL
 n   = 10       # numero de PRODUTOS
@@ -247,6 +256,7 @@ prod  = []      # vetor PRODUTOS
 max = 100       # capacidade maxima
 sv1 = sv2 = 0
 te = 1
+fit = 0
 
 prod = vetor_peso(n,5)
 print("***** CONFIGURAÇÕES ******")
@@ -292,6 +302,11 @@ print("Tempera Simulada (3)....: ",sf," Custo: ",v1,"Ganho.....: {:.2f}".format(
 
 
 #RESULTADO AG ---------------------------------
-sol = ag(n,TP,NG,TC,TM,IG)
-print("Raiz encontrada: ",sol)
-vl = eq2grau(sol)
+sol = ag(n,prod, TP)
+vl = (aptidao(sol))
+#print("população Avalia: ",matematica.fabs (float (sol)))
+
+#RESULTADO APTDAO -----------------------------
+#print("\nAptdidao:")
+#fit = aptidao(POP,TP)
+#print(fit)
