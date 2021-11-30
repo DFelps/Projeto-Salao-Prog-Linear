@@ -2,7 +2,9 @@ from random import randrange, uniform, randint
 from copy import deepcopy
 from math import exp
 import numpy as np
-import math as matematica
+from backpacks import generate_backpack
+from items import generating_list_item, get_lighter_item
+from math import ceil
 
 # ROTINA PARA GERAR VETOR
 def vetor_peso(n,c):
@@ -150,85 +152,8 @@ def tempera(s_ini,t_ini,t_fim):
     return atual, va
 # FIM DA ROTINA
 
-
-#ROTINA ALGORITMO GENETICO -----------------------------------------------
-
-
-# CALCULA EQ. 2º GRAU
-def eq2grau(x):
-    return abs(x*x + 3*x - 4)
-# FIM DA ROTINA
-
-
-# CONVERTE BINÁRIO PARA DECIMAL
-def bin_to_dec(p):
-    x = 0
-    tam = len(p)
-    for i in range(1,tam):
-        x += p[i]*(2**(len(p)-i-1))
-
-    if p[0]==1:
-        x = -x
-    return x
-# FIM DA ROTINA
-
-
-
-#def sol_inicial(n,max):
-
-    # criar lista com os índices de todos os produtos
- #   s_ini = np.zeros(n,int)
-  #  resul = 0
-   # while resul<max:
-    #    ind  = randrange(0,n)
-     #   if s_ini[ind]==0:
-        #    s_ini[ind] = 1
-        #    resul += prod[ind]
-    #if resul!=max:
-     #  s_ini[ind] = 0
-
-    #return s_ini
-
-# GERA UM CROMOSSOMO
-def cromossomo(n, max):
-    s_ini = np.zeros(n,int)
-    resul = 0
-    while resul<max:
-        ind  = randrange(0,n)
-        if s_ini[ind]==0:
-            s_ini[ind] = 1
-            resul += prod[ind]
-    if resul!=max:
-       s_ini[ind] = 0
-    return s_ini
-        
-#ROTINA POP
-def pop_inicial(tp, n):
-    pop = np.zeros((tp, n), int)
-    #aleatorio uniforme
-    for i in range (tp):
-        pop[i] = cromossomo(n, max)
-    return pop
-#FIM DA ROTINA
-
-# ROTINA ALGORITMO GENÉTICO
-def ag(n,prod,tp):
-    pop   = np.zeros((tp,n),int)
-    fit   = np.zeros(tp,int)
-
-    # população inicial
-    pop = pop_inicial(tp,n)
-    print("*** População Inicial ***")
-    for i in range(tp):
-        print("Indivíduo ",i+1,":\t",pop[i])
-
-    #seleciona melhor indivíduo como resposta
-    fit = aptidao(n, prod, pop)
-    return 0
-# FIM DA ROTINA----------------------------------------------------
-
 # CALCULA A APTIDÃO
-def aptidao(pop,tp, prod):
+def aptidao(pop,tp,prod):
     f = np.zeros(tp,int)
     soma = 0
     for i in range(tp):
@@ -301,12 +226,215 @@ print("Tempera Simulada (3)....: ",sf," Custo: ",v1,"Ganho.....: {:.2f}".format(
 # FIM CÓDIGO PRINCIPAL
 
 
-#RESULTADO AG ---------------------------------
-sol = ag(n,prod, TP)
-vl = (aptidao(sol))
-#print("população Avalia: ",matematica.fabs (float (sol)))
 
-#RESULTADO APTDAO -----------------------------
-#print("\nAptdidao:")
-#fit = aptidao(POP,TP)
-#print(fit)
+#ROTINA ALGORITMO GENETICO -----------------------------------------------
+
+
+def get_random_item(list_items):
+    position_item = randint(0, len(list_items) - 1)
+
+    return position_item
+
+def insert_item_in_backpack(backpack, list_items):
+
+    position_item = get_random_item(list_items)
+
+    if backpack["available_weight"] >= list_items[position_item]:
+        
+        backpack["available_weight"] -= list_items[position_item]
+        backpack["list_items"][position_item] = 1
+    
+    return backpack
+
+
+def initial_solution(backpack, list_items, minimum_value):
+    
+    while backpack["available_weight"] > minimum_value:
+        insert_item_in_backpack(backpack, list_items)
+    
+    return backpack
+
+
+def initial_population(population, population_size, backpack, list_items, lighter_item):
+    
+    for t in range(population_size):
+        individual = (initial_solution(deepcopy(backpack), list_items, lighter_item))
+        population.append(individual)
+        print(population[t])
+    
+
+    return population 
+
+
+
+def evaluate(backpack,list_items):
+    value = 0
+
+    for i in range(len(backpack["list_items"])):
+        if backpack["list_items"][i] == 1:
+            value += list_items[i]
+    
+    return value
+
+
+def fi_population(population):
+    fi = []
+
+    for value in population:
+        if value["available_weight"] == 0 :
+            fi.append(9999)
+
+        else:
+            fi.append(1/value["available_weight"])
+    
+    return fi
+
+def fit_population(fi):
+    fits = []
+    soma = sum(fi)
+    
+    for values_fi in fi:
+               
+        fits.append(values_fi/soma)
+        
+    print("Fit população: ",sum(fits))
+
+    return fits
+
+
+def select_parents(fits):
+    
+    parents = []
+
+    while len(parents) < 2:
+        ale = uniform(0,1)
+        soma = 0
+        for i in range(0, len(fits)):
+            
+            if soma > ale :
+                soma+=fits[i]
+
+            parents.append(i-1)
+    
+    return parents
+
+def reproduction(population, fits, crossing_rate, size_population, max, backpack_aux):
+
+    list_descendants = []
+
+    cutoff = randrange(1,max)
+    #print("cutoff: ",cutoff)
+    number_of_intersections = ceil(size_population * crossing_rate)
+
+    for i in range(2*number_of_intersections):
+        linha=[]
+
+        for j in range (max):
+            linha.append(0)
+        
+        list_descendants.append(linha)
+    k=0
+
+    for i in range(number_of_intersections):
+        p = select_parents(fits)
+
+        s1 = population[p[0]]['list_items']
+        s2 = population[p[1]]['list_items']
+
+        for j in range(cutoff-1):
+
+            list_descendants[k][j]   = s1[j]
+            list_descendants[k+1][j] = s2[j]
+
+        for j in range (cutoff, max):
+            list_descendants[k][j]   = s2[j]
+            list_descendants[k+1][j] = s1[j]
+
+        k+=2
+    
+    #print("Quantidade de filho2: ", len(list_descendants[1]))
+    print("Filhos: ", list_descendants)
+
+    #Seleciona um dos 4 filhos aleatóriamente
+    filhoSelecionado = randint(0,3)
+    print("Filho selecionado: ",filhoSelecionado+1)
+    #Seleciona um dos 10 elementos dentro do filho
+    eleSelecionado = randint(0,9)
+    print("Cromossomo dentro do filho selecionado: ",eleSelecionado+1)
+
+    novoFilho = list_descendants[filhoSelecionado]
+
+    if (list_descendants[filhoSelecionado][eleSelecionado] == 0):
+        list_descendants[filhoSelecionado][eleSelecionado] = 1
+    else:
+        list_descendants[filhoSelecionado][eleSelecionado] = 0
+
+    print("Filho após a mutação: ", novoFilho)
+
+    return list_descendants
+
+
+def new_population(list_descendants):
+    
+    population_new = []
+    values = []
+    #print("tamanho de descendants:", len(list_descendants))
+    for pop in list_descendants:
+        values.append(pop)
+    
+    #print("tamanho de values: ", len(values))
+
+    '''for i in range(10):
+        population_new.append(list_descendants[values.index(min(values))])          
+        del(list_descendants[values.index(min(values))])
+        del(values[values.index(min(values))])'''
+
+    #print("tamanho de descendants após for:", len(list_descendants))
+    #print("tamanho de values após for: ", len(values))
+
+    return population_new
+
+# Setup
+
+backpack_aux = generate_backpack(10,1000)
+backpack = generate_backpack(10,1000)
+list_items = generating_list_item(10,1000)
+lighter_item = get_lighter_item(list_items)
+
+# Parametros Genéticos
+
+population_size = 10
+crossing_rate = 0.2
+generation_interval = 0.1
+number_of_generations = 1
+
+def genetic_algorithm(population_size, crossing_rate, generation_interval, number_of_generations):
+
+    population = []   
+
+    initial_population(population, population_size, backpack, list_items, lighter_item)
+
+    #print (population[0])
+
+    for t in range(number_of_generations):
+        
+        fi = fi_population(population)
+        fit_p = fit_population(fi)
+        #parents = select_parents(fit_p)
+        descendent = reproduction(population, fit_p, crossing_rate, population_size, 10,backpack_aux)
+        population_new = new_population(descendent)
+
+        #print("Nova População: ", descendent)
+        #print("descenden: ",descendent)
+        #population_new = 0
+    print("Nova População: ",descendent)  
+    print("tamanho da nova pop: ",len(descendent)) 
+    return descendent
+
+
+solution = genetic_algorithm(population_size,
+                             crossing_rate,
+                             generation_interval,
+                             number_of_generations)
+
+# FIM DA ROTINA----------------------------------------------------
