@@ -1,24 +1,27 @@
+from random import randrange, uniform
+from math import ceil
 import numpy as np
-import random as rd
-import math as mh
 
+#ROTINA ALGORITMO GENETICO -----------------------------------------------
+# função para gerar pesos dos 
 
-# função para gerar pesos dos itens
+# ROTINA AVALIA
+def avalia(sf,n,prod):
+    
+    resul = 0
+    for i in range(0,n):
+        resul += prod[i]*sf[i]*1
+
+    return resul
+# FIM DA ROTINA
+
 def Gerar_Pesos(n):
     
     pe = np.zeros(n,int)
     for i in range(n):
-        pe[i] = rd.randrange(5,20)
+        pe[i] = uniform(5,20)
     return pe
-
-# função para calcular custo do caminho
-def Avalia(p,n,pe):
-    valor = 0
-    for i in range(n):
-        valor += p[i]*pe[i]
     
-    return valor
-# fim da função para calcular custo do caminho
 
 # método de ordenação (BUBBLE SORT)
 def Sort(p,f,qp):
@@ -34,12 +37,12 @@ def Sort(p,f,qp):
                 p[j]  = aux_p
     return p, f
 # Correção dos individuos
-def Restricao(n,desc,qd,pe,c_max):
+def Restricao(n,desc,qd,pe,max):
 
     for i in range(qd):
-        while Avalia(desc[i],n,pe)>c_max:
+        while avalia(desc[i],n,pe)>max:
             while True:
-                j = rd.randrange(0,n)
+                j = randrange(0,n)
                 if desc[i][j]==1:
                     break
             desc[i][j] = 0
@@ -47,11 +50,11 @@ def Restricao(n,desc,qd,pe,c_max):
     return desc
 
 # função para gerar população inicial
-def Cromossomo(n,c_max,pe):
+def Cromossomo(n,max,pe):
     cr = np.zeros(n,int)
     pm = 0
-    while pm<c_max:
-        ind = rd.randrange(0,n)
+    while pm<max:
+        ind = randrange(0,n)
         if cr[ind] == 0:
             cr[ind] = 1
         pm += pe[ind]
@@ -64,18 +67,18 @@ def Cromossomo(n,c_max,pe):
 def Roleta(tp,fit):
     soma = 0
     p= 0
-    ale = rd.uniform(0,1)
+    ale = randrange(0,1)
     while(soma<ale):
         p += 1
         soma += fit[p]
     return p
 
 # função para gerar população inicial
-def PopIni(n,c_max,pe,tp):
+def PopIni(n,max,pe,tp):
     pop = np.zeros((tp,n),int)
 
     for i in range(tp):
-        pop[i] = Cromossomo(n,c_max,pe)
+        pop[i] = Cromossomo(n,max,pe)
 
     return pop
 # fim da função para gerar população inicial
@@ -85,13 +88,13 @@ def Aptidao(n,tp,pop,pe):
     
     f = np.zeros(tp,float)
 
-    soma = 0.
+    soma = 0
     for i in range(tp):
-        vl = Avalia(pop[i],tp,pe)
+        vl = avalia(pop[i],n,pe)
         f[i] = vl
         soma += f[i]
     
-    for i in range(TP):
+    for i in range(tp):
         f[i] /= soma
     
     return f
@@ -100,8 +103,8 @@ def Aptidao(n,tp,pop,pe):
 # função para execução do operador de cruzamento
 def Crossover(n,pop,fit,tp,tc):
 
-    qc = mh.ceil(tc*tp)
-    corte = rd.randrange(0,N)
+    qc = ceil(tc*tp)
+    corte = randrange(0,n)
 
     desc = []
     for i in range(qc):
@@ -132,13 +135,13 @@ def Crossover(n,pop,fit,tp,tc):
 
 # função para execução do operador de mutação
 def Mutacao(n,desc,tp,tm):
-    qm = mh.ceil(tp*tm)
+    qm = ceil(tp*tm)
     qd = len(desc)
 
     for i in range(qm):
-        j = rd.randrange(0,qd)
+        j = randrange(0,qd)
         aux = desc[j]
-        p1 = rd.randrange(0,n)
+        p1 = randrange(0,n)
 
         aux[p1] = 1 - aux[p1]
 
@@ -149,7 +152,7 @@ def Mutacao(n,desc,tp,tm):
 
 # função para gerar a nova população
 def NovaPop(pop,desc,fit,fit_d,tp,ig):
-    elite = mh.ceil(tp*ig)
+    elite = ceil(tp*ig)
 
     j= 0
     for i in range(elite,tp):
@@ -162,6 +165,7 @@ def NovaPop(pop,desc,fit,fit_d,tp,ig):
 # rotina AG
 def AlgGen(n,pe,c_max,tp,ng,tc,tm,ig):
     # Gera população inicial
+    
     pop = PopIni(n,c_max,pe,tp)
 
     # calcula fitness da população
@@ -198,28 +202,40 @@ def AlgGen(n,pe,c_max,tp,ng,tc,tm,ig):
     Sort(pop,fit,tp)
     return pop[0]
 
+# CONFIG AG
+TP = [10,50,100]      # tamanho da população
+TC = [0.8, 0.9]     # taxa de cruzamento
+TM = [0.1, 0.2]     # taxa de mutação
+IG = [0.1, 0.2]     # intervalo de geração
+NG = [10, 50, 100]    # número de gerações
 
-# ********** MÓDULO PRINCIPAL **********
-# definição dos parâmetros do problema
-N     =  10
-C_MAX = 70
-TP    =  [10, 50, 100]
-NG    =  [10, 100]
-TC    =  [0.5, 0.8]
-TM    =  [0.1, 0.3]
-IG    =  [0.1, 0.2, 0.4]
+
+# CÓDIGO PRINCIPAL
+N   = 10       # numero de PRODUTOS
+si  = []      # solução inicial
+sf   = []      # solução final
+prod  = []      # vetor PRODUTOS
+max = 100       # capacidade maxima
+sv1 = sv2 = 0
+te = 1
+fit = 0
+pe=0
 
 # matriz de adjacências do grafo
 peso = Gerar_Pesos(N)
-
 for i_tp in range(len(TP)):
-    for i_ng in range(len(NG)):
-        for i_tc in range(len(TC)):
-            for i_tm in range(len(TM)):
-                for i_ig in range(len(IG)):
-                    sol = AlgGen(N,peso,C_MAX,TP[i_tp],
-                                 NG[i_ng],TC[i_tc],TM[i_tm],
-                                 IG[i_ig])
-                    print("AG.: ",TP[i_tp],NG[i_ng],TC[i_tc],
-                                  TM[i_tm],IG[i_ig],sol,
-                                  Avalia(sol,N,peso))
+     for i_ng in range(len(NG)):
+         for i_tc in range(len(TC)):
+             for i_tm in range(len(TM)):
+                 for i_ig in range(len(IG)):
+                     sol = AlgGen(N,peso,max,TP[i_tp],
+                                  NG[i_ng],TC[i_tc],TM[i_tm],
+                                  IG[i_ig])
+                     print("AG.: ",TP[i_tp],NG[i_ng],TC[i_tc],
+                                   TM[i_tm],IG[i_ig],sol,
+                                   avalia(sol,N,peso))
+
+"""
+sol = AlgGen(N,peso,max,TP, NG,TC,TM,IG)
+print("AG.: ", sol, avalia(sol,N,peso))
+"""
