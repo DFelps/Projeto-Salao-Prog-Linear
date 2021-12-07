@@ -32,7 +32,6 @@ def sol_inicial(n,max):
             resul += prod[ind]
     if resul!=max:
        s_ini[ind] = 0
-
     return s_ini
 # FIM DA ROTINA
 
@@ -152,6 +151,11 @@ def tempera(s_ini,t_ini,t_fim):
 
     return atual, va
 # FIM DA ROTINA
+
+
+
+
+
 #ROTINA ALGORITMO GENETICO -----------------------------------------------
 # função para gerar pesos dos itens
 def Gerar_Pesos(n):
@@ -160,15 +164,7 @@ def Gerar_Pesos(n):
     for i in range(n):
         pe[i] = uniform(5,20)
     return pe
-
-# função para calcular custo do caminho
-def Avalia(p,n,pe):
-    valor = 0
-    for i in range(n):
-        valor += p[i]*pe[i]
     
-    return valor
-# fim da função para calcular custo do caminho
 
 # método de ordenação (BUBBLE SORT)
 def Sort(p,f,qp):
@@ -184,10 +180,10 @@ def Sort(p,f,qp):
                 p[j]  = aux_p
     return p, f
 # Correção dos individuos
-def Restricao(n,desc,qd,pe,c_max):
+def Restricao(n,desc,qd,pe,max):
 
     for i in range(qd):
-        while Avalia(desc[i],n,pe)>c_max:
+        while avalia(desc[i],n,pe)>max:
             while True:
                 j = uniform(0,n)
                 if desc[i][j]==1:
@@ -197,10 +193,10 @@ def Restricao(n,desc,qd,pe,c_max):
     return desc
 
 # função para gerar população inicial
-def Cromossomo(n,c_max,pe):
+def Cromossomo(n,max,pe):
     cr = np.zeros(n,int)
     pm = 0
-    while pm<c_max:
+    while pm<max:
         ind = uniform(0,n)
         if cr[ind] == 0:
             cr[ind] = 1
@@ -221,11 +217,11 @@ def Roleta(tp,fit):
     return p
 
 # função para gerar população inicial
-def PopIni(n,c_max,pe,tp):
+def PopIni(n,max,pe,tp):
     pop = np.zeros((tp,n),int)
 
     for i in range(tp):
-        pop[i] = Cromossomo(n,c_max,pe)
+        pop[i] = Cromossomo(n,max,pe)
 
     return pop
 # fim da função para gerar população inicial
@@ -235,9 +231,9 @@ def Aptidao(n,tp,pop,pe):
     
     f = np.zeros(tp,float)
 
-    soma = 0.
+    soma = 0
     for i in range(tp):
-        vl = Avalia(pop[i],tp,pe)
+        vl = avalia(pop[i],tp,pe)
         f[i] = vl
         soma += f[i]
     
@@ -365,22 +361,22 @@ max = 100       # capacidade maxima
 sv1 = sv2 = 0
 te = 1
 fit = 0
+pe=0
 
 # matriz de adjacências do grafo
+peso = Gerar_Pesos(N)
 
-# peso = Gerar_Pesos(N)
-
-# for i_tp in range(len(TP)):
-#     for i_ng in range(len(NG)):
-#         for i_tc in range(len(TC)):
-#             for i_tm in range(len(TM)):
-#                 for i_ig in range(len(IG)):
-#                     sol = AlgGen(N,peso,max,TP[i_tp],
-#                                  NG[i_ng],TC[i_tc],TM[i_tm],
-#                                  IG[i_ig])
-#                     print("AG.: ",TP[i_tp],NG[i_ng],TC[i_tc],
-#                                   TM[i_tm],IG[i_ig],sol,
-#                                   Avalia(sol,N,peso))
+for i_tp in range(len(TP)):
+     for i_ng in range(len(NG)):
+         for i_tc in range(len(TC)):
+             for i_tm in range(len(TM)):
+                 for i_ig in range(len(IG)):
+                     sol = AlgGen(N,peso,max,TP[i_tp],
+                                  NG[i_ng],TC[i_tc],TM[i_tm],
+                                  IG[i_ig])
+                     print("AG.: ",TP[i_tp],NG[i_ng],TC[i_tc],
+                                   TM[i_tm],IG[i_ig],sol,
+                                   avalia(sol,N,peso))
 
 prod = vetor_peso(N,5)
 print("***** CONFIGURAÇÕES ******")
@@ -422,4 +418,6 @@ t_ini = 900
 t_fim = 0.09
 sf,v1 = tempera(si,t_ini,t_fim)
 print("Tempera Simulada (3)....: ",sf," Custo: ",v1,"Ganho.....: {:.2f}".format(100*(float(v1-vi))/vi),"%")
-# FIM CÓDIGO PRINCIPAL
+
+pg = Gerar_Pesos(N)
+print("\nPesos Gerados.........: ",pg)
